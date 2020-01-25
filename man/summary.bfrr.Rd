@@ -4,10 +4,10 @@
 \alias{summary.bfrr}
 \title{Summarise bfrr object}
 \usage{
-\method{summary}{bfrr}(x, ...)
+\method{summary}{bfrr}(object, ...)
 }
 \arguments{
-\item{x}{a bfrr list}
+\item{object}{a bfrr list}
 
 \item{...}{Other arguments}
 }

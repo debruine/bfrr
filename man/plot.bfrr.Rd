@@ -4,12 +4,12 @@
 \alias{plot.bfrr}
 \title{Show bfrr plot}
 \usage{
-\method{plot}{bfrr}(obj, ...)
+\method{plot}{bfrr}(x, ...)
 }
 \arguments{
-\item{...}{Other arguments}
-
 \item{x}{a bfrr list}
+
+\item{...}{Other arguments}
 }
 \value{
 plot

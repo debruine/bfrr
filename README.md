@@ -59,7 +59,7 @@ rr <- bfrr(
   sample_df = length(simdat) - 1, # degrees of freedom
   model = "normal",
   mean = 0, # mean of the H1 distribution
-  sd = 0.5, # SD of the H1 distribution
+  sd = 0.25, # SD of the H1 distribution
   tail = 1, # is the test 1-tailed or 2-tailed
   criterion = 6, # BF against which to test for support for H1/H0
   rr_interval = c(0, 1), # theory_sd over which to explore robustness range
@@ -71,8 +71,13 @@ Use `summary(rr)` to output a summary paragraph.
 
 ``` r
 summary(rr)
-#> The likelihood of your data under the theoretical distribution HN(0, 0.5) is 0.15. The likelihood of your data under the null distribution T(49) is 0.01. The Bayes Factor is 19.7; this test finds evidence for H1 with a criterion of 6. The region of theoretical SDs that give the same conclusion is RR = [0.10, 1.00].
 ```
+
+The likelihood of your data under the theoretical distribution HN(0,
+0.25) is 0.16. The likelihood of your data under the null distribution
+T(49) is 0.01. The Bayes Factor is 20.6; this test finds evidence for H1
+with a criterion of 6. The region of theoretical SDs that give the same
+conclusion is RR = \[0.10, 1.00\].
 
 Use `plot(rr)` to view a plot of your data.
 

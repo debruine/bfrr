@@ -14,7 +14,7 @@
 #'
 #' @examples
 #'
-#' rr <- bfrr(0.5, 1/sqrt(30), 29, 0, .7, 1, 5, c(0,3))
+#' rr <- bfrr(0.5, 1/sqrt(30), 29, "normal", mean = 0, sd = .7, tail = 1)
 #' summary(rr)
 #' plot(rr)
 bfrr <- function(sample_mean = 0,
