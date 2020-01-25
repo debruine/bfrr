@@ -1,0 +1,82 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+set.seed(8675309)
+```
+
+# bfrr
+
+<!-- badges: start -->
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+[![Travis build status](https://travis-ci.org/debruine/bfrr.svg?branch=master)](https://travis-ci.org/debruine/bfrr)
+[![Codecov test coverage](https://codecov.io/gh/debruine/bfrr/branch/master/graph/badge.svg)](https://codecov.io/gh/debruine/bfrr?branch=master)
+<!-- badges: end -->
+
+Calculate Bayes Factors and robustness regions from summary statistics.
+
+## Installation
+
+You can install the development version from [GitHub](https://github.com/debruine/bfrr) with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("debruine/bfrr")
+```
+## Example
+
+
+```{r example}
+library(bfrr)
+```
+
+First, we'll simulate 50 data points from a normal distribution with a mean of 0.25 and SD of 1 and conduct a one-sample t-test.
+
+```{r}
+simdat <- rnorm(50, 0.25, 1)
+t.test(simdat)
+```
+
+Set up the test using `bfrr()`.
+
+```{r}
+rr <- bfrr(
+  sample_mean = mean(simdat), # mean of the sample
+  sample_se = sd(simdat) / sqrt(length(simdat)), # SE of the sample
+  sample_df = length(simdat) - 1, # degrees of freedom
+  model = "normal",
+  mean = 0, # mean of the H1 distribution
+  sd = 0.5, # SD of the H1 distribution
+  tail = 1, # is the test 1-tailed or 2-tailed
+  criterion = 6, # BF against which to test for support for H1/H0
+  rr_interval = c(0, 1), # theory_sd over which to explore robustness range
+  precision = 2 # number of decimal places to calculate RR
+)
+```
+
+Use `summary(rr)` to output a summary paragraph.
+
+```{r}
+summary(rr)
+```
+
+Use `plot(rr)` to view a plot of your data.
+
+```{r}
+plot(rr)
+```
+
+
+
+
+
+

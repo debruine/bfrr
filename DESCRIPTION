@@ -1,0 +1,28 @@
+Package: bfrr
+Title: Bayes Factors and Robustness Regions
+Version: 0.0.0.9000
+Authors@R: c(
+    person(given = "Lisa", 
+           family = "DeBruine", 
+           role = c("aut", "cre"), 
+           email = "debruine@gmail.com", 
+           comment = c(ORCID = "0000-0002-7523-5539")),
+    person(given = "Zoltan", 
+           family = "Dienes", 
+           role = c("aut"), 
+           email = "Z.Dienes@sussex.ac.uk", 
+           comment = c(ORCID = "0000-0001-7454-3161")))
+Description: Calculate Bayes Factors and robustness regions from summary statistics.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 6.1.1
+Imports: 
+    magrittr,
+    ggplot2,
+    dplyr,
+    purrr
+Suggests: 
+    testthat (>= 2.1.0),
+    covr
