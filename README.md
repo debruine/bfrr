@@ -29,6 +29,8 @@ devtools::install_github("debruine/bfrr")
 
 ``` r
 library(bfrr)
+library(ggplot2)
+library(cowplot)
 ```
 
 First, we’ll simulate 50 data points from a normal distribution with a
@@ -62,8 +64,11 @@ rr <- bfrr(
   sd = 0.25, # SD of the H1 distribution
   tail = 1, # is the test 1-tailed or 2-tailed
   criterion = 6, # BF against which to test for support for H1/H0
-  rr_interval = c(0, 1), # theory_sd over which to explore robustness range
-  precision = 2 # number of decimal places to calculate RR
+  rr_interval = list( # ranges to vary H1 parameters for robustness regions
+    mean = c(-2, 2), # explore H1 means from 0 to 2
+    sd = c(0, 2) # explore H1 SDs from 0 to 2
+  ),
+  precision = 0.05 # precision to vary RR parameters
 )
 ```
 
@@ -73,11 +78,11 @@ Use `summary(rr)` to output a summary paragraph.
 summary(rr)
 ```
 
-The likelihood of your data under the theoretical distribution HN(0,
+The likelihood of your data under the theoretical distribution N(0,
 0.25) is 0.16. The likelihood of your data under the null distribution
 T(49) is 0.01. The Bayes Factor is 20.6; this test finds evidence for H1
-with a criterion of 6. The region of theoretical SDs that give the same
-conclusion is RR = \[0.10, 1.00\].
+with a criterion of 6. The region of theoretical model parameters that
+give the same conclusion is `HN([-0.2, 0.9], 0.25); HN(0, [0.1, 2])`.
 
 Use `plot(rr)` to view a plot of your data.
 
@@ -86,3 +91,22 @@ plot(rr)
 ```
 
 <img src="man/figures/README-unnamed-chunk-5-1.png" width="100%" />
+
+If your mean is 0 or you set the same number for the lower and upper
+bounds of a parameter’s `rr_interval`, that parameter won’t vary and
+you’ll get a graph that looks like this.
+
+``` r
+r1 <- bfrr(sample_mean = 0.25, tail = 1)
+r2 <- bfrr(sample_mean = 0.25, tail = 2)
+p1 <- plot(r1)
+p2 <- plot(r2)
+
+p1t <- paste0("One-tailed H1, RR = [", toString(r1$RR$sd), "]")
+p2t <- paste0("Two-tailed H1, RR = [", toString(r2$RR$sd), "]")
+cowplot::plot_grid(p1 + ggtitle(p1t), 
+                   p2 + ggtitle(p2t), 
+                   nrow = 2)
+```
+
+<img src="man/figures/README-unnamed-chunk-6-1.png" width="100%" />

@@ -26,9 +26,9 @@ likelihood <- function(sample_mean = 0,
   params <- list(...)
   likelihood <- NA
 
-  if (model == "h0") {
+  if (model == "h0") { # H0 ----
     likelihood <- stats::dt(sample_mean/sample_se, df = sample_df)
-  } else if (model %in% c("normal", "norm", "n")) {
+  } else if (model %in% c("normal", "norm", "n")) { # Normal ----
     # get parameters or defaults
     theory_mean <-default(params$mean, 0)
     theory_sd <- default(params$sd, 1)
@@ -39,18 +39,17 @@ likelihood <- function(sample_mean = 0,
     lower <- theory_mean - 5 * theory_sd
     upper <- theory_mean + 5 * theory_sd
     theta_list <- seq(lower, upper-incr, incr)
-    tail_fac <- 1
     if (identical(tail, 1)) {
-      # if 1-tailed, skip all theta <= 0 and double heights in the other tail
+      # if 1-tailed, skip all theta <= 0 and double the increment multiplier
       theta_list <- theta_list[theta_list>0]
-      tail_fac <- 2
+      incr <- 2*incr
     }
 
     dist_theta <- stats::dnorm(theta_list, theory_mean, theory_sd)
-    heights <- dist_theta * stats::dt((sample_mean-theta_list)/sample_se, df=sample_df)
+    heights <- stats::dt((sample_mean-theta_list)/sample_se, df=sample_df)
 
-    likelihood <- sum(heights)*incr*tail_fac
-  } else if (model %in% c("uniform", "unif", "u")) {
+    likelihood <- sum(dist_theta * heights)*incr
+  } else if (model %in% c("uniform", "unif", "u")) { # Uniform ----
     # get parameters or defaults
     lower <- default(params$lower, 0)
     upper <- default(params$upper, 1)
@@ -62,11 +61,13 @@ likelihood <- function(sample_mean = 0,
 
     range <- upper - lower
     incr <- range / steps
-    theta_list <- seq(lower, upper-incr, incr)
+    #theta_list <- seq(lower, upper-incr, incr) # Lisa's way
+    #dist_theta <- stats::dunif(theta_list, lower, upper) # inefficient but conceptually consistent
+    theta_list <- seq(lower+incr, upper+incr, incr) # Zoltan's way
     dist_theta <- 1 / range
-    heights <- dist_theta * stats::dt((sample_mean-theta_list)/sample_se, df=sample_df)
+    heights <- stats::dt((sample_mean-theta_list)/sample_se, df=sample_df)
 
-    likelihood <- sum(heights)*incr
+    likelihood <- sum(dist_theta * heights)*incr
   }
 
   return(likelihood)

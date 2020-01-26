@@ -6,7 +6,7 @@
 \usage{
 bfrr(sample_mean = 0, sample_se = 0.1, sample_df = 99,
   model = "normal", ..., criterion = 3, rr_interval = NA,
-  precision = 2)
+  precision = 0.05)
 }
 \arguments{
 \item{sample_mean}{the observed sample mean}
@@ -21,9 +21,9 @@ bfrr(sample_mean = 0, sample_se = 0.1, sample_df = 99,
 
 \item{criterion}{the cutoff Bayes Factor for concluding evidence in favour of H0 or H1}
 
-\item{rr_interval}{the interval within which to test for robustness (default 0 to twice the theory_sd)}
+\item{rr_interval}{the parameter intervals within which to test for robustness}
 
-\item{precision}{the number of decimal places to calculate the robustness region to (default 2)}
+\item{precision}{the step size for calculating the robustness region (default 0.05)}
 }
 \value{
 list

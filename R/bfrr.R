@@ -6,8 +6,8 @@
 #' @param model the model under which to calculate likelihood (H0, normal or uniform
 #' @param ... model parameters (mean, sd and tail for normal, lower and upper for uniform)
 #' @param criterion the cutoff Bayes Factor for concluding evidence in favour of H0 or H1
-#' @param rr_interval the interval within which to test for robustness (default 0 to twice the theory_sd)
-#' @param precision the number of decimal places to calculate the robustness region to (default 2)
+#' @param rr_interval the parameter intervals within which to test for robustness
+#' @param precision the step size for calculating the robustness region (default 0.05)
 #'
 #' @return list
 #' @export
@@ -24,18 +24,23 @@ bfrr <- function(sample_mean = 0,
                  ...,
                  criterion = 3,
                  rr_interval = NA,
-                 precision = 2) {
+                 precision = 0.05) {
+
+  if (!(tolower(model) %in% c("normal", "norm", "n", "uniform", "unif", "u"))) {
+    stop("The model type '", model, "' is not supported")
+  }
 
   params <- list(...)
   model <- toupper(substr(model, 1, 1))
 
+  ## calculate likelihoods ----
   x <- list(
     null = likelihood(sample_mean, sample_se, sample_df),
     theory = likelihood(sample_mean, sample_se, sample_df, model, ...)
   )
   x$BF <- x$theory/x$null
 
-  # check BF against criterion
+  # check BF against criterion ----
   if (x$BF >= criterion) {
     conclusion <- "H1"
   } else if (x$BF <= 1/criterion) {
@@ -44,50 +49,87 @@ bfrr <- function(sample_mean = 0,
     conclusion <- "no"
   }
 
-  # calculate robustness region
+  # calculate robustness region ----
 
-  if (model == "N") {
-    theory_mean <- default(params$mean, 0)
-    theory_sd <- default(params$sd, 1)
-    tail <- default(params$tail, 2)
-    if (all(is.na(rr_interval))) rr_interval <- c(0, 2*theory_sd)
+  if (model == "N") { # normal ----
+    params$mean <- default(params$mean, 0)
+    params$sd <- default(params$sd, 1)
+    params$tail <- default(params$tail, 2)
 
-    rr_sd <- seq(rr_interval[1], rr_interval[2], 10^-precision)
-    rr_sd <- rr_sd[rr_sd > 0]
-    rr_BF <- purrr::map_dbl(rr_sd, function(rr_theory_sd) {
-      likelihood(sample_mean, sample_se, sample_df, model, mean = theory_mean,
-                 sd = rr_theory_sd, tail = tail) / x$null
+    sd_intv <- default(rr_interval$sd, c(0, 2*params$sd))
+    rr_sd <- seq(sd_intv[1], sd_intv[2], precision)
+    rr_sd <- c(rr_sd[rr_sd > 0], params$sd)
+
+    mean_intv <- default(rr_interval$mean, c(0, 2*params$mean))
+    rr_mean <- c(seq(mean_intv[1], mean_intv[2], precision), params$mean)
+
+    rr_params <- expand.grid(M = rr_mean, SD = rr_sd)
+
+    rr_BF <- purrr::map2_dbl(rr_params$M, rr_params$SD, function(rr_m, rr_s) {
+      likelihood(sample_mean, sample_se, sample_df, model,
+                 mean = rr_m, sd = rr_s, tail = params$tail) / x$null
     })
 
     H1 <- sprintf("%sN(%g, %g)",
                   ifelse(identical(tail,1),"H", ""),
-                  theory_mean, theory_sd)
+                  params$mean, params$sd)
 
-  } else if (model == "U") {
+  } else if (model == "U") { # uniform ----
     lower <- default(params$lower, 0)
     upper <- default(params$upper, 1)
-    if (all(is.na(rr_interval))) rr_interval <- c(lower, upper)
+    lower_intv <- default(rr_interval$lower, c(lower, sample_mean-precision))
+    upper_intv <- default(rr_interval$upper, c(upper, sample_mean+precision))
+    rr_lower <- seq(lower_intv[1], lower_intv[2], precision)
+    rr_upper <- seq(upper_intv[1], upper_intv[2], precision)
 
-    rr_sd <- c()
-    rr_BF <- c()
+    rr_params <- expand.grid(lower = rr_lower, upper = rr_upper)
+
+    rr_BF <- purrr::map2_dbl(rr_params$lower, rr_params$upper,
+                             function(rr_l, rr_u) {
+      likelihood(sample_mean, sample_se, sample_df, model,
+                 lower = rr_l, upper = rr_u) / x$null
+    })
 
     H1 <- sprintf("U(%g, %g)", lower, upper)
   }
 
-  dat <- data.frame(
-    "SD" = rr_sd,
-    "BF" = rr_BF
-  )
+  # set up data frame ----
+  dat <- rr_params
+  dat$BF <- rr_BF
+
+  dat <- dplyr::distinct(dat)
+
   dat$support <- dplyr::case_when(
     dat$BF >= criterion ~ "H1",
     dat$BF <= 1/criterion ~ "H0",
     TRUE ~ "no"
   )
 
-  rr <- range(dplyr::filter(dat, support == conclusion)$SD)
+  if (model == "N") {
+    rrM <- dplyr::filter(dat, SD == params$sd) %>%
+      dplyr::arrange(M) %>%
+      dplyr::mutate(i = support != dplyr::lag(support),
+             i = ifelse(dplyr::row_number() == 1, TRUE, i),
+             grp = cumsum(i))
+    mgrp <- dplyr::filter(rrM, M == params$mean)$grp[1]
 
-  #H0 <- sprintf("N(0, %g)", sample_se)
-  H0 <- sprintf("T(%g)", sample_df)
+    rrSD <- dplyr::filter(dat, M == params$mean) %>%
+      dplyr::arrange(SD) %>%
+      dplyr::mutate(i = support != dplyr::lag(support),
+                    i = ifelse(dplyr::row_number() == 1, TRUE, i),
+                    grp = cumsum(i))
+    sdgrp <- dplyr::filter(rrSD, SD == params$sd)$grp[1]
+
+    rr <- list(
+      mean = range(dplyr::filter(rrM, grp == mgrp)$M),
+      sd = range(dplyr::filter(rrSD, grp == sdgrp)$SD)
+    )
+  } else if (model == "U") {
+    rr <- list(
+      lower = range(dplyr::filter(dat, upper == upper, support == conclusion)$lower),
+      upper = range(dplyr::filter(dat, lower == lower, support == conclusion)$upper)
+    )
+  }
 
   ret <- list("theory" = x$theory,
               "null" = x$null,
@@ -97,10 +139,12 @@ bfrr <- function(sample_mean = 0,
               "sample_mean" = sample_mean,
               "sample_se" = sample_se,
               "sample_df" = sample_df,
+              "model" = model,
+              "params" = params,
               "criterion" = criterion,
-              "H0_model" = H0,
+              "H0_model" = sprintf("T(%g)", sample_df),
               "H1_model" = H1,
-              "interval" = dat)
+              "rr_data" = dat)
 
   class(ret) <- c("bfrr", "list")
 

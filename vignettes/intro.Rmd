@@ -1,0 +1,47 @@
+---
+title: "intro"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{intro}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+set.seed(8675309)
+```
+
+```{r setup}
+library(bfrr)
+```
+
+```{r}
+a <- rnorm(30, 0, 1)
+b <- rnorm(30, 0.4, 1)
+
+tt <- t.test(a, b)
+
+sample_mean <- tt$estimate[[1]] - tt$estimate[[2]]
+sample_se <- tt$stderr
+sample_df <- tt$parameter[[1]]
+
+```
+
+```{r}
+rr <- bfrr(sample_mean, sample_se, sample_df, 
+     model = "normal", mean = 0, sd = 0.5, tail = 1)
+```
+
+```{r, results='asis'}
+summary(rr)
+```
+
+```{r}
+plot(rr)
+```
+
+

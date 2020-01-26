@@ -7,9 +7,28 @@
 #' @export
 #'
 summary.bfrr <- function(object, ...) {
-  precision <- log10(object$interval$SD[2] - object$interval$SD[1]) %>% abs() %>% round()
+  precision <- object$rr_data[1,2] - object$rr_data[1, 1]
+  half <- ifelse(identical(object$params$tail, 1), "H", "")
+
+  RR <- sapply(names(object$RR), function(n) {
+    rng <- object$RR[[n]]
+    if (unique(rng) %>% length() > 1) {
+      dplyr::case_when(
+        n == "mean" ~ paste0(half, "N([", toString(rng), "], ", object$params$sd, ")"),
+        n == "sd" ~ paste0(half, "N(", object$params$mean, ", [", toString(rng), "])"),
+        n == "lower" ~ paste0("U([", toString(rng), "], ", object$params$upper, ")"),
+        n == "upper" ~ paste0("U(", object$params$lower, ", [", toString(rng), "])")
+      )
+    } else {
+      "no"
+    }
+
+  })
+
+  RR <- RR[RR != "no"] %>% paste(collapse = "; ")
+
   explanation <- sprintf(
-    paste0("The likelihood of your data under the theoretical distribution %s is %.2f. The likelihood of your data under the null distribution %s is %.2f. The Bayes Factor is %.1f; this test finds %s with a criterion of %s. The region of theoretical SDs that give the same conclusion is RR = [%.", precision, "f, %.", precision, "f]."),
+    "The likelihood of your data under the theoretical distribution %s is %.2f. The likelihood of your data under the null distribution %s is %.2f. The Bayes Factor is %.1f; this test finds %s with a criterion of %s. The region of theoretical model parameters that give the same conclusion is `%s`.",
     object$H1_model,
     round(object$theory, 2),
     object$H0_model,
@@ -25,9 +44,12 @@ summary.bfrr <- function(object, ...) {
       object$conclusion == "H1" ~ as.character(object$criterion),
       TRUE ~ paste0(object$criterion, " (1/", object$criterion, ")")
     ),
-    object$RR[1], object$RR[2]
+    RR
   )
 
   cat(explanation, "\n")
 }
+
+
+
 
