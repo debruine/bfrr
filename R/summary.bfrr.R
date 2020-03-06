@@ -28,12 +28,12 @@ summary.bfrr <- function(object, ...) {
   RR <- RR[RR != "no"] %>% paste(collapse = "; ")
 
   explanation <- sprintf(
-    "The likelihood of your data under the theoretical distribution %s is %.2f. The likelihood of your data under the null distribution %s is %.2f. The Bayes Factor is %.1f; this test finds %s with a criterion of %s. The region of theoretical model parameters that give the same conclusion is `%s`.",
+    "The likelihood of your data under the theoretical distribution %s is %.2f. The likelihood of your data under the null distribution %s is %.2f. The Bayes Factor is %.2f; this test finds %s with a criterion of %s. The region of theoretical model parameters that give the same conclusion is `%s`.",
     object$H1_model,
     round(object$theory, 2),
     object$H0_model,
     round(object$null, 2),
-    round(object$BF, 1),
+    round(object$BF, 2),
     dplyr::case_when(
       object$conclusion == "H0" ~ "evidence for H0",
       object$conclusion == "H1" ~ "evidence for H1",

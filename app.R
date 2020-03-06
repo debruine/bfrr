@@ -7,13 +7,13 @@ library(ggplot2)
 
 ## Functions ----
 
-source("../R/Bf.R")
-source("../R/bfrr.R")
-source("../R/plot.bfrr.R")
-source("../R/summary.bfrr.R")
-source("../R/default.R")
-source("../R/likelihood.R")
-source("../R/utils-pipe.R")
+source("R/Bf.R")
+source("R/bfrr.R")
+source("R/plot.bfrr.R")
+source("R/summary.bfrr.R")
+source("R/default.R")
+source("R/likelihood.R")
+source("R/utils-pipe.R")
 
 ggplot2::theme_set(theme_bw(base_size = 20))
 
